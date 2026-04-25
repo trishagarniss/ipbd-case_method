@@ -1,0 +1,15 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Data lokal (jangan push raw data json atau database)
+data/
+*.json
+*.csv
