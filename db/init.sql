@@ -1,44 +1,55 @@
 -- Tabel utama: snapshot harga dari CoinGecko
 CREATE TABLE IF NOT EXISTS coins_prices (
-    id                      VARCHAR(100),
-    symbol                  VARCHAR(20),
-    name                    VARCHAR(100),
-    current_price           NUMERIC,
-    market_cap              NUMERIC,
-    total_volume            NUMERIC,
+    pk_id BIGSERIAL PRIMARY KEY,
+    id VARCHAR(100) NOT NULL,
+    symbol VARCHAR(20),
+    name VARCHAR(100),
+    current_price NUMERIC,
+    market_cap NUMERIC,
+    total_volume NUMERIC,
     price_change_percentage_24h NUMERIC,
-    price_change_7d         NUMERIC,
-    circulating_supply      NUMERIC,
-    last_updated            TIMESTAMPTZ,
-    fetched_at              TIMESTAMPTZ DEFAULT NOW()
+    price_change_7d NUMERIC,
+    circulating_supply NUMERIC,
+    last_updated TIMESTAMPTZ NOT NULL,
+    fetched_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (id, last_updated)
 );
+CREATE INDEX IF NOT EXISTS idx_coins_prices_id ON coins_prices (id);
+CREATE INDEX IF NOT EXISTS idx_coins_prices_last_updated ON coins_prices (last_updated DESC);
 
--- Tabel historical: harga harian + moving avg
 CREATE TABLE IF NOT EXISTS coins_historical (
-    coin_id     VARCHAR(100),
-    date        DATE,
-    price       NUMERIC,
-    price_ma7   NUMERIC,
-    price_ma30  NUMERIC,
-    volatility  NUMERIC
+    pk_id BIGSERIAL PRIMARY KEY,
+    coin_id VARCHAR(100) NOT NULL,
+    date DATE NOT NULL,
+    price NUMERIC,
+    price_ma7 NUMERIC,
+    price_ma30 NUMERIC,
+    volatility NUMERIC,
+    UNIQUE (coin_id, date)
 );
+CREATE INDEX IF NOT EXISTS idx_historical_coin_date ON coins_historical (coin_id, date DESC);
 
--- Tabel Fear & Greed Index
 CREATE TABLE IF NOT EXISTS fear_greed_daily (
-    date    DATE,
-    value   INTEGER,
+    pk_id   BIGSERIAL   PRIMARY KEY,
+    date    DATE        NOT NULL UNIQUE,
+    value   INTEGER     NOT NULL,
     label   VARCHAR(50)
 );
 
--- Tabel CoinCap assets
 CREATE TABLE IF NOT EXISTS coincap_assets (
-    id                  VARCHAR(100),
-    symbol              VARCHAR(20),
-    name                VARCHAR(100),
-    "priceUsd"          NUMERIC,
-    "marketCapUsd"      NUMERIC,
-    "volumeUsd24Hr"     NUMERIC,
-    "changePercent24Hr" NUMERIC,
-    rank                INTEGER,
-    fetched_at          TIMESTAMPTZ DEFAULT NOW()
+    pk_id BIGSERIAL PRIMARY KEY,
+    id VARCHAR(100)    NOT NULL,
+    symbol VARCHAR(20),
+    name VARCHAR(100),
+    price_usd NUMERIC,
+    market_cap_usd NUMERIC,
+    volume_usd_24hr NUMERIC,
+    change_percent_24hr NUMERIC,
+    rank INTEGER,
+    -- DEFAULT NOW() dihapus — nilai WAJIB dikirim dari Python
+    -- pakai context["logical_date"] dari Airflow agar retry aman
+    fetched_at TIMESTAMPTZ NOT NULL,
+    UNIQUE (id, fetched_at)
 );
+CREATE INDEX IF NOT EXISTS idx_coincap_id ON coincap_assets (id);
+CREATE INDEX IF NOT EXISTS idx_coincap_fetched_at ON coincap_assets (fetched_at DESC);

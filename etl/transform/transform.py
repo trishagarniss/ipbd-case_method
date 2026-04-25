@@ -1,3 +1,4 @@
+from __future__ import annotations  # fix: Python 3.8 compat
 import pandas as pd
 from loguru import logger
 
@@ -14,7 +15,7 @@ def transform_markets(raw: list[dict]) -> pd.DataFrame:
     df.rename(columns={
         "price_change_percentage_7d_in_currency": "price_change_7d"
     }, inplace=True)
-    df["last_updated"] = pd.to_datetime(df["last_updated"])
+    df["last_updated"] = pd.to_datetime(df["last_updated"], utc=True)
     df.dropna(subset=["current_price", "market_cap"], inplace=True)
     df["fetched_at"] = pd.Timestamp.utcnow()
     logger.info(f"[Transform] markets: {len(df)} rows cleaned")
@@ -54,9 +55,20 @@ def transform_coincap(raw: list[dict]) -> pd.DataFrame:
     cols = ["id", "symbol", "name", "priceUsd", "marketCapUsd",
             "volumeUsd24Hr", "changePercent24Hr", "rank"]
     df = df[cols].copy()
+
     for col in ["priceUsd", "marketCapUsd", "volumeUsd24Hr", "changePercent24Hr"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
     df["rank"] = pd.to_numeric(df["rank"], errors="coerce").astype("Int64")
-    df["fetched_at"] = pd.Timestamp.utcnow()
+
+    # fix: rename ke snake_case agar sesuai skema DB dan tidak perlu quoted column
+    df.rename(columns={
+        "priceUsd":          "price_usd",
+        "marketCapUsd":      "market_cap_usd",
+        "volumeUsd24Hr":     "volume_usd_24hr",
+        "changePercent24Hr": "change_percent_24hr",
+    }, inplace=True)
+
+    # fetched_at TIDAK di-set di sini — wajib di-inject dari DAG via logical_date
+    # agar retry-safe. Lihat dag_transform_load.py.
     logger.info(f"[Transform] coincap: {len(df)} rows cleaned")
     return df

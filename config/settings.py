@@ -4,11 +4,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # PostgreSQL
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "postgres")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
 POSTGRES_DB   = os.getenv("POSTGRES_DB", "crypto_db")
-POSTGRES_USER = os.getenv("POSTGRES_USER", "crypto_user")
-POSTGRES_PASS = os.getenv("POSTGRES_PASSWORD", "yourpassword")
+POSTGRES_USER = os.getenv("POSTGRES_USER", "crypto_master")
+POSTGRES_PASS = os.getenv("POSTGRES_PASSWORD", "IPBD2026")
 
 DATABASE_URL = (
     f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASS}"
@@ -17,8 +17,8 @@ DATABASE_URL = (
 
 # MinIO
 MINIO_ENDPOINT   = os.getenv("MINIO_ENDPOINT", "localhost:9000")
-MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
-MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin")
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minio_admin")
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "SecretKeyMinio!")
 MINIO_BUCKET     = os.getenv("MINIO_BUCKET", "raw-crypto")
 
 # API endpoints

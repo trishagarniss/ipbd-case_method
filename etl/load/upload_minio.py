@@ -1,3 +1,4 @@
+from __future__ import annotations  # fix: Python 3.8 compat — diperlukan untuk dict | list
 import boto3
 import json
 from datetime import datetime

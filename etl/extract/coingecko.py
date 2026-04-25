@@ -1,6 +1,5 @@
+from __future__ import annotations  # fix: Python 3.8 compat
 import requests
-import json
-from datetime import datetime
 from loguru import logger
 from config.settings import COINGECKO_BASE, COINS_PER_PAGE, HISTORY_DAYS
 

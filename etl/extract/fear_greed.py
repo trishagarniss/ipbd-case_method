@@ -1,3 +1,4 @@
+from __future__ import annotations  # fix: Python 3.8 compat
 import requests
 from loguru import logger
 from config.settings import FEARGREED_BASE
