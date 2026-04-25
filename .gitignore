@@ -13,3 +13,7 @@ wheels/
 data/
 *.json
 *.csv
+
+logs/
+
+*.zip
