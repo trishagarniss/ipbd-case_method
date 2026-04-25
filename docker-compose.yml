@@ -1,8 +1,9 @@
 x-airflow-common: &airflow-common
-  image: apache/airflow:2.8.1
+  build: .
+  # image: apache/airflow:2.8.1
   env_file: .env
   environment:
-    _PIP_ADDITIONAL_REQUIREMENTS: "loguru requests pandas sqlalchemy psycopg2-binary boto3"
+    # _PIP_ADDITIONAL_REQUIREMENTS: "loguru requests pandas sqlalchemy psycopg2-binary boto3"
     PYTHONPATH: /opt/airflow
   volumes:
     - ./dags:/opt/airflow/dags
