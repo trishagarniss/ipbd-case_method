@@ -31,7 +31,7 @@ def fetch_historical_bulk(coin_ids: list[str] = TOP_COINS) -> dict:
             resp.raise_for_status()
             results[coin_id] = resp.json()
             logger.info(f"[Historical] {i}/{total} {coin_id} fetched")
-            time.sleep(2)  # hindari rate limit CoinGecko 30 req/menit
+            time.sleep(10)
         except Exception as e:
             logger.warning(f"[Historical] skip {coin_id}: {e}")
     logger.info(f"[Historical] selesai: {len(results)} coins")

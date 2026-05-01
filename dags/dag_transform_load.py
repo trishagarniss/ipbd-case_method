@@ -29,26 +29,20 @@ with DAG(
         df = transform_markets(raw)
         upsert_markets(df)
 
-    def transform_load_coincap(**context):
-        from etl.extract.coincap import fetch_assets
-        from etl.transform.transform import transform_coincap
-        from etl.load.load_postgres import upsert_coincap
-
-        # pakai logical_date dari Airflow — TIDAK berubah saat retry
-        # ini yang membuat UNIQUE (id, fetched_at) bisa menolak duplikat
-        logical_date = context["logical_date"]
-        if logical_date.tzinfo is None:
-            logical_date = logical_date.replace(tzinfo=timezone.utc)
-
-        raw = fetch_assets()
-        df = transform_coincap(raw)
-        upsert_coincap(df, fetched_at=logical_date)  # inject dari luar
+    def transform_load_historical():
+        from etl.extract.historical import fetch_historical_bulk
+        from etl.transform.transform import transform_historical
+        from etl.load.load_postgres import upsert_historical
+        raw = fetch_historical_bulk()
+        for coin_id, data in raw.items():
+            df = transform_historical(data, coin_id)
+            upsert_historical(df)
 
     def transform_load_fear_greed():
         from etl.extract.fear_greed import fetch_fear_greed
         from etl.transform.transform import transform_fear_greed
         from etl.load.load_postgres import upsert_fear_greed
-        raw = fetch_fear_greed(limit=1)
+        raw = fetch_fear_greed(limit=365)
         df = transform_fear_greed(raw)
         upsert_fear_greed(df)
 
@@ -58,13 +52,12 @@ with DAG(
     )
     t2 = PythonOperator(
         task_id="tl_coincap",
-        python_callable=transform_load_coincap,
-        # provide_context deprecated di Airflow 2.x, pakai **context otomatis
+        python_callable=transform_load_historical,
     )
     t3 = PythonOperator(
         task_id="tl_fear_greed",
         python_callable=transform_load_fear_greed,
     )
 
-    # paralel — semua task jalan bersamaan
+    # paralel
     [t1, t2, t3]

@@ -1,10 +1,9 @@
-from __future__ import annotations  # fix: Python 3.8 compat
+from __future__ import annotations
 import pandas as pd
 from loguru import logger
 
 
 def transform_markets(raw: list[dict]) -> pd.DataFrame:
-    """Bersihkan & normalisasi data markets dari CoinGecko."""
     df = pd.DataFrame(raw)
     df = df[[
         "id", "symbol", "name", "current_price", "market_cap",
@@ -23,12 +22,11 @@ def transform_markets(raw: list[dict]) -> pd.DataFrame:
 
 
 def transform_historical(raw: dict, coin_id: str) -> pd.DataFrame:
-    """Flatten historical market_chart ke tabular + hitung moving avg."""
     prices = raw.get("prices", [])
     df = pd.DataFrame(prices, columns=["timestamp_ms", "price"])
     df["coin_id"] = coin_id
     df["date"] = pd.to_datetime(df["timestamp_ms"], unit="ms").dt.date
-    df["price_ma7"] = df["price"].rolling(7).mean()
+    df["price_ma7"]  = df["price"].rolling(7).mean()
     df["price_ma30"] = df["price"].rolling(30).mean()
     df["volatility"] = df["price"].pct_change().rolling(7).std()
     df.drop(columns=["timestamp_ms"], inplace=True)
@@ -38,37 +36,11 @@ def transform_historical(raw: dict, coin_id: str) -> pd.DataFrame:
 
 
 def transform_fear_greed(raw: list[dict]) -> pd.DataFrame:
-    """Normalisasi Fear & Greed data."""
     df = pd.DataFrame(raw)
     df = df[["value", "value_classification", "timestamp"]].copy()
     df["value"] = pd.to_numeric(df["value"])
-    df["date"] = pd.to_datetime(df["timestamp"], unit="s").dt.date
+    df["date"]  = pd.to_datetime(df["timestamp"], unit="s").dt.date
     df.drop(columns=["timestamp"], inplace=True)
     df.rename(columns={"value_classification": "label"}, inplace=True)
     logger.info(f"[Transform] fear_greed: {len(df)} rows cleaned")
-    return df
-
-
-def transform_coincap(raw: list[dict]) -> pd.DataFrame:
-    """Normalisasi data dari CoinCap."""
-    df = pd.DataFrame(raw)
-    cols = ["id", "symbol", "name", "priceUsd", "marketCapUsd",
-            "volumeUsd24Hr", "changePercent24Hr", "rank"]
-    df = df[cols].copy()
-
-    for col in ["priceUsd", "marketCapUsd", "volumeUsd24Hr", "changePercent24Hr"]:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
-    df["rank"] = pd.to_numeric(df["rank"], errors="coerce").astype("Int64")
-
-    # fix: rename ke snake_case agar sesuai skema DB dan tidak perlu quoted column
-    df.rename(columns={
-        "priceUsd":          "price_usd",
-        "marketCapUsd":      "market_cap_usd",
-        "volumeUsd24Hr":     "volume_usd_24hr",
-        "changePercent24Hr": "change_percent_24hr",
-    }, inplace=True)
-
-    # fetched_at TIDAK di-set di sini — wajib di-inject dari DAG via logical_date
-    # agar retry-safe. Lihat dag_transform_load.py.
-    logger.info(f"[Transform] coincap: {len(df)} rows cleaned")
     return df

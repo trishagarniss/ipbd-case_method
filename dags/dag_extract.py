@@ -27,14 +27,11 @@ with DAG(
         data = fetch_markets()
         upload_raw(data, "coingecko_markets")
 
-    def extract_coincap():
-        import requests
+    def extract_historical():
+        from etl.extract.historical import fetch_historical_bulk
         from etl.load.upload_minio import upload_raw
-        url = "https://api.coingecko.com/api/v3/global"
-        resp = requests.get(url, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-        upload_raw(data, "coingecko_global")
+        data = fetch_historical_bulk()
+        upload_raw(data, "coingecko_historical")
 
     def extract_fear_greed():
         from etl.extract.fear_greed import fetch_fear_greed
@@ -43,7 +40,7 @@ with DAG(
         upload_raw(data, "fear_greed")
 
     t1 = PythonOperator(task_id="extract_coingecko",  python_callable=extract_coingecko)
-    t2 = PythonOperator(task_id="extract_coincap",    python_callable=extract_coincap)
+    t2 = PythonOperator(task_id="extract_historical", python_callable=extract_historical)
     t3 = PythonOperator(task_id="extract_fear_greed", python_callable=extract_fear_greed)
 
     [t1, t2, t3]
