@@ -5,17 +5,6 @@ Dibangun dengan Python · Apache Airflow · MinIO · PostgreSQL · Docker
 
 ---
 
-## 🏗️ Arsitektur
-
-```
-CoinGecko API ─┐
-CoinCap API   ─┼─► Python Extractor ─► MinIO (raw JSON) ─► Transform (Pandas) ─► PostgreSQL ─► Metabase
-Fear & Greed  ─┘
-                        ↑ setiap 15 menit via Airflow DAG
-```
-
----
-
 ## 🚀 Cara Menjalankan (dari Nol)
 
 ### 1. Clone repo
