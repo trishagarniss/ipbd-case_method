@@ -12,20 +12,15 @@ default_args = {
 }
 
 with DAG(
-    dag_id="dag_extract",
+    dag_id="dag_extract_daily",
     default_args=default_args,
-    description="Extract data dari 3 sumber API ke MinIO",
-    schedule_interval="*/15 * * * *",
+    description="Extract data Historical & Fear Greed ke MinIO (1x Sehari)",
+    schedule_interval="@daily",
+    max_active_runs=1,
     start_date=datetime(2024, 1, 1),
     catchup=False,
-    tags=["crypto", "extract"],
+    tags=["crypto", "extract", "daily"],
 ) as dag:
-
-    def extract_coingecko():
-        from etl.extract.coingecko import fetch_markets
-        from etl.load.upload_minio import upload_raw
-        data = fetch_markets()
-        upload_raw(data, "coingecko_markets")
 
     def extract_historical():
         from etl.extract.historical import fetch_historical_bulk
@@ -39,8 +34,7 @@ with DAG(
         data = fetch_fear_greed(limit=365)
         upload_raw(data, "fear_greed")
 
-    t1 = PythonOperator(task_id="extract_coingecko",  python_callable=extract_coingecko)
-    t2 = PythonOperator(task_id="extract_historical", python_callable=extract_historical)
-    t3 = PythonOperator(task_id="extract_fear_greed", python_callable=extract_fear_greed)
+    t1 = PythonOperator(task_id="extract_historical_daily", python_callable=extract_historical)
+    t2 = PythonOperator(task_id="extract_fear_greed_daily", python_callable=extract_fear_greed)
 
-    [t1, t2, t3]
+    [t1, t2]

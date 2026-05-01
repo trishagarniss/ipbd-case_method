@@ -20,19 +20,44 @@ TOP_COINS = [
 ]
 
 def fetch_historical_bulk(coin_ids: list[str] = TOP_COINS) -> dict:
-    """Tarik historical harga 60 koin dari CoinGecko (90 hari) = 5400 rows."""
+    """Tarik historical harga 60 koin dengan sistem Anti-Blokir (Retry)."""
     results = {}
     total = len(coin_ids)
+    
     for i, coin_id in enumerate(coin_ids, 1):
-        try:
-            url = f"{COINGECKO_BASE}/coins/{coin_id}/market_chart"
-            params = {"vs_currency": "usd", "days": 90, "interval": "daily"}
-            resp = requests.get(url, params=params, timeout=30)
-            resp.raise_for_status()
-            results[coin_id] = resp.json()
-            logger.info(f"[Historical] {i}/{total} {coin_id} fetched")
-            time.sleep(10)
-        except Exception as e:
-            logger.warning(f"[Historical] skip {coin_id}: {e}")
-    logger.info(f"[Historical] selesai: {len(results)} coins")
+        success = False
+        retries = 3
+        
+        while not success and retries > 0:
+            try:
+                url = f"{COINGECKO_BASE}/coins/{coin_id}/market_chart"
+                params = {"vs_currency": "usd", "days": 90, "interval": "daily"}
+                
+                logger.info(f"[Historical] Menarik data {i}/{total} {coin_id}...")
+                resp = requests.get(url, params=params, timeout=30)
+                
+                # Cek apakah kita kena limit API CoinGecko (Error 429)
+                if resp.status_code == 429:
+                    logger.warning(f"⚠️ Kena Limit di {coin_id}! Istirahat 60 detik biar aman...")
+                    time.sleep(60)
+                    retries -= 1
+                    continue # Langsung coba lagi koin yang sama tanpa skip
+                
+                resp.raise_for_status() # Cek error lain selain 429
+                
+                # Kalau eksekusi sukses sampai sini
+                results[coin_id] = resp.json()
+                logger.info(f"✅ Berhasil: {coin_id}")
+                success = True
+                time.sleep(15) # Jeda normal 15 detik biar sopan ke server
+                
+            except Exception as e:
+                logger.error(f"❌ Error lain di {coin_id}: {e}")
+                time.sleep(30)
+                retries -= 1
+                
+        if not success:
+            logger.error(f"🚨 Gagal total narik {coin_id} setelah 3x coba. Skip ke koin berikutnya.")
+
+    logger.info(f"[Historical] Proses selesai. Berhasil ditarik: {len(results)}/{total} coins")
     return results

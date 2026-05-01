@@ -1,7 +1,7 @@
 from __future__ import annotations
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import sys
 sys.path.insert(0, "/opt/airflow")
 
@@ -12,22 +12,15 @@ default_args = {
 }
 
 with DAG(
-    dag_id="dag_transform_load",
+    dag_id="dag_etl_daily",
     default_args=default_args,
-    description="Transform + Load ke PostgreSQL",
-    schedule_interval="*/15 * * * *",
+    description="Tarik data Historical & Fear Greed (1x Sehari)",
+    schedule_interval="@daily", 
+    max_active_runs=1,
     start_date=datetime(2024, 1, 1),
     catchup=False,
-    tags=["crypto", "transform", "load"],
+    tags=["crypto", "daily", "historical"],
 ) as dag:
-
-    def transform_load_markets():
-        from etl.extract.coingecko import fetch_markets
-        from etl.transform.transform import transform_markets
-        from etl.load.load_postgres import upsert_markets
-        raw = fetch_markets()
-        df = transform_markets(raw)
-        upsert_markets(df)
 
     def transform_load_historical():
         from etl.extract.historical import fetch_historical_bulk
@@ -46,18 +39,7 @@ with DAG(
         df = transform_fear_greed(raw)
         upsert_fear_greed(df)
 
-    t1 = PythonOperator(
-        task_id="tl_markets",
-        python_callable=transform_load_markets,
-    )
-    t2 = PythonOperator(
-        task_id="tl_coincap",
-        python_callable=transform_load_historical,
-    )
-    t3 = PythonOperator(
-        task_id="tl_fear_greed",
-        python_callable=transform_load_fear_greed,
-    )
+    t1 = PythonOperator(task_id="tl_coincap_daily", python_callable=transform_load_historical)
+    t2 = PythonOperator(task_id="tl_fear_greed_daily", python_callable=transform_load_fear_greed)
 
-    # paralel
-    [t1, t2, t3]
+    [t1, t2]
