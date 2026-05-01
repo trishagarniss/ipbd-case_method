@@ -19,7 +19,7 @@ with DAG(
     max_active_runs=1,
     start_date=datetime(2024, 1, 1),
     catchup=False,
-    tags=["crypto", "realtime"],
+    tags=["crypto", "realtime", "markets"],
 ) as dag:
 
     def transform_load_markets():

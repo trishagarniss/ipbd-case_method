@@ -19,7 +19,7 @@ with DAG(
     max_active_runs=1,
     start_date=datetime(2024, 1, 1),
     catchup=False,
-    tags=["crypto", "daily", "historical"],
+    tags=["crypto", "daily", "historical", "fear_greed"],
 ) as dag:
 
     def transform_load_historical():
@@ -39,7 +39,7 @@ with DAG(
         df = transform_fear_greed(raw)
         upsert_fear_greed(df)
 
-    t1 = PythonOperator(task_id="tl_coincap_daily", python_callable=transform_load_historical)
+    t1 = PythonOperator(task_id="tl_historical_daily", python_callable=transform_load_historical)
     t2 = PythonOperator(task_id="tl_fear_greed_daily", python_callable=transform_load_fear_greed)
 
     [t1, t2]
