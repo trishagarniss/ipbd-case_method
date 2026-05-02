@@ -19,3 +19,5 @@ logs/
 *.zip
 
 .env
+
+ngrok.exe
