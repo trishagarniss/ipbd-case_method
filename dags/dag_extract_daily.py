@@ -3,12 +3,17 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 import sys
+
 sys.path.insert(0, "/opt/airflow")
+
+from etl.utils.telegram_alerts import send_telegram_alert, send_telegram_success
+
 
 default_args = {
     "owner": "crypto-pipeline",
     "retries": 2,
     "retry_delay": timedelta(minutes=2),
+    "on_failure_callback": send_telegram_alert,
 }
 
 with DAG(
@@ -20,6 +25,7 @@ with DAG(
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=["crypto", "extract", "daily"],
+    on_success_callback=send_telegram_success,
 ) as dag:
 
     def extract_historical():
