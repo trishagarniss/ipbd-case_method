@@ -43,7 +43,7 @@ def send_telegram_success(context):
     pesan = f"✅ <b>AIRFLOW ETL SUCCESS</b> ✅\n\n" \
             f"<b>DAG:</b> <code>{dag_id}</code>\n" \
             f"<b>Waktu:</b> <code>{execution_date}</code>\n\n" \
-            f"<b>Semua data berhasil ditarik dan di-load ke PostgreSQL. Dashboard aman!</b> 😎"
+            f"<b>Semua data berhasil ditarik dan di-load ke PostgreSQL. Dashboard aman!</b>"
 
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {'chat_id': chat_id, 'text': pesan, 'parse_mode': 'HTML'}
