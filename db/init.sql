@@ -1,3 +1,12 @@
+-- Tabel 0: Dimensi Koin (Buku Induk Koin)
+-- Dibuat pertama agar bisa direferensikan tabel lain
+CREATE TABLE IF NOT EXISTS dim_coins (
+    coin_id VARCHAR(100) PRIMARY KEY,
+    symbol VARCHAR(20),
+    name VARCHAR(100),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Tabel 1: Snapshot harga real-time dari CoinGecko /coins/markets
 -- Update: setiap 15 menit via Airflow DAG
 CREATE TABLE IF NOT EXISTS coins_prices (
@@ -13,7 +22,10 @@ CREATE TABLE IF NOT EXISTS coins_prices (
     circulating_supply NUMERIC,
     last_updated TIMESTAMPTZ NOT NULL,
     fetched_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE (id, last_updated)
+    UNIQUE (id, last_updated),
+
+    -- Relasi Foreign Key ke dim_coins
+    CONSTRAINT fk_coin_prices FOREIGN KEY (id) REFERENCES dim_coins(coin_id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_coins_prices_id ON coins_prices (id);
 CREATE INDEX IF NOT EXISTS idx_coins_prices_last_updated ON coins_prices (last_updated DESC);
@@ -30,7 +42,10 @@ CREATE TABLE IF NOT EXISTS coins_historical (
     price_ma7 NUMERIC,
     price_ma30 NUMERIC,
     volatility NUMERIC,
-    UNIQUE (coin_id, date)
+    UNIQUE (coin_id, date),
+
+    -- Relasi Foreign Key ke dim_coins
+    CONSTRAINT fk_coin_historical FOREIGN KEY (coin_id) REFERENCES dim_coins(coin_id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_historical_coin_date ON coins_historical (coin_id, date DESC);
 
@@ -40,26 +55,21 @@ CREATE INDEX IF NOT EXISTS idx_historical_coin_date ON coins_historical (coin_id
 -- 0-24: Extreme Fear, 25-49: Fear, 50-74: Greed, 75-100: Extreme Greed
 -- Update: harian via Airflow DAG
 CREATE TABLE IF NOT EXISTS fear_greed_daily (
-    pk_id   BIGSERIAL   PRIMARY KEY,
-    date    DATE        NOT NULL UNIQUE,
-    value   INTEGER     NOT NULL,
-    label   VARCHAR(50)
+    pk_id BIGSERIAL PRIMARY KEY,
+    date DATE NOT NULL UNIQUE,
+    value INTEGER NOT NULL,
+    label VARCHAR(50)
 );
 
--- CREATE TABLE IF NOT EXISTS coincap_assets (
---     pk_id BIGSERIAL PRIMARY KEY,
---     id VARCHAR(100)    NOT NULL,
---     symbol VARCHAR(20),
---     name VARCHAR(100),
---     price_usd NUMERIC,
---     market_cap_usd NUMERIC,
---     volume_usd_24hr NUMERIC,
---     change_percent_24hr NUMERIC,
---     rank INTEGER,
---     -- DEFAULT NOW() dihapus — nilai WAJIB dikirim dari Python
---     -- pakai context["logical_date"] dari Airflow agar retry aman
---     fetched_at TIMESTAMPTZ NOT NULL,
---     UNIQUE (id, fetched_at)
--- );
--- CREATE INDEX IF NOT EXISTS idx_coincap_id ON coincap_assets (id);
--- CREATE INDEX IF NOT EXISTS idx_coincap_fetched_at ON coincap_assets (fetched_at DESC);
+-- Tabel 4: ETL Logging 
+-- Mencatat riwayat eksekusi dan error dari Airflow
+CREATE TABLE IF NOT EXISTS etl_logs (
+    log_id BIGSERIAL PRIMARY KEY,
+    dag_id VARCHAR(100),
+    task_id VARCHAR(100),
+    execution_date TIMESTAMPTZ,
+    status VARCHAR(20),
+    rows_processed INT DEFAULT 0,
+    error_msg TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);

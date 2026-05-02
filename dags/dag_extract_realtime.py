@@ -24,7 +24,7 @@ with DAG(
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=["crypto", "extract", "realtime"],
-    on_success_callback=send_telegram_success,
+    # on_success_callback=send_telegram_success,
 ) as dag:
 
     def extract_coingecko():

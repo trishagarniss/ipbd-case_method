@@ -25,10 +25,14 @@ with DAG(
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=["crypto", "realtime", "markets"],
-    on_success_callback=send_telegram_success,
+    # on_success_callback=send_telegram_success,
 ) as dag:
 
     def transform_load_markets():
+        
+        # Testing error handling & Telegram Alert
+        # raise Exception("BOOM! Sengaja dibikin error buat ngetes Bot Telegram!")
+        
         from etl.extract.coingecko import fetch_markets
         from etl.transform.transform import transform_markets
         from etl.load.load_postgres import upsert_markets

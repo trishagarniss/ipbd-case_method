@@ -8,16 +8,24 @@ def send_telegram_alert(context):
     task_instance = context.get('task_instance')
     task_id = task_instance.task_id
     dag_id = task_instance.dag_id
-    log_url = task_instance.log_url
+    
+    exec_date = context.get('execution_date').strftime("%Y-%m-%d %H:%M:%S")
+    
+    exception = context.get('exception')
+    error_msg = str(exception)[:200] + "..." if len(str(exception)) > 200 else str(exception)
+    
+    airflow_url = "http://localhost:8081/home"
 
-    pesan = f"🚨 *AIRFLOW ETL ALERT* 🚨\n\n" \
-            f"❌ *DAG:* `{dag_id}`\n" \
-            f"📉 *Task:* `{task_id}` GAGAL!\n" \
-            f"🔗 *Cek Log:* {log_url}\n\n" \
-            f"Tolong cek server!"
+    pesan = f"🚨 <b>CRITICAL ETL FAILURE</b> 🚨\n\n" \
+            f"<b>DAG:</b> <code>{dag_id}</code>\n" \
+            f"<b>Task:</b> <code>{task_id}</code>\n" \
+            f"<b>Waktu:</b> {exec_date}\n\n" \
+            f"<b>Detail Error:</b>\n<pre>{error_msg}</pre>\n\n" \
+            f"<a href='{airflow_url}'>Buka Dashboard Airflow</a>\n\n" \
+            f"<b>>> Tolong segera cek server!</b>"
 
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    payload = {'chat_id': chat_id, 'text': pesan, 'parse_mode': 'Markdown'}
+    payload = {'chat_id': chat_id, 'text': pesan, 'parse_mode': 'HTML'}
     
     try:
         requests.post(url, data=payload)
@@ -32,13 +40,13 @@ def send_telegram_success(context):
     dag_id = dag_run.dag_id
     execution_date = context.get('execution_date').strftime("%Y-%m-%d %H:%M:%S")
 
-    pesan = f"✅ *AIRFLOW ETL SUCCESS* ✅\n\n" \
-            f"🚀 *DAG:* `{dag_id}`\n" \
-            f"⏰ *Waktu:* `{execution_date}`\n\n" \
-            f"Semua data berhasil ditarik dan di-load ke PostgreSQL. Dashboard aman! 😎"
+    pesan = f"✅ <b>AIRFLOW ETL SUCCESS</b> ✅\n\n" \
+            f"<b>DAG:</b> <code>{dag_id}</code>\n" \
+            f"<b>Waktu:</b> <code>{execution_date}</code>\n\n" \
+            f"<b>Semua data berhasil ditarik dan di-load ke PostgreSQL. Dashboard aman!</b> 😎"
 
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    payload = {'chat_id': chat_id, 'text': pesan, 'parse_mode': 'Markdown'}
+    payload = {'chat_id': chat_id, 'text': pesan, 'parse_mode': 'HTML'}
     
     try:
         requests.post(url, data=payload)
