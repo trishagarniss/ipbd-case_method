@@ -15,7 +15,7 @@ with DAG(
     dag_id="dag_extract_daily",
     default_args=default_args,
     description="Extract data Historical & Fear Greed ke MinIO (1x Sehari)",
-    schedule_interval="@daily",
+    schedule_interval="0 1 * * *",
     max_active_runs=1,
     start_date=datetime(2024, 1, 1),
     catchup=False,

@@ -16,7 +16,15 @@ TOP_COINS = [
     "tezos", "theta-token", "axie-infinity", "decentraland", "sandbox",
     "gala", "chiliz", "enjincoin", "basic-attention-token", "curve-dao-token",
     "compound-governance-token", "yearn-finance", "sushi", "1inch",
-    "loopring", "zcash", "dash", "neo", "waves", "iota"
+    "loopring", "zcash", "dash", "neo", "waves", "iota",
+    "toncoin", "optimism", "pepe", "injective-protocol", "kaspa",
+    "cronos", "mantle", "render", "immutable-x", "thorchain",
+    "celestia", "sui", "sei", "floki", "bonk",
+    "arweave", "dydx", "blur", "jupiter", "pyth-network",
+    "gmx", "synthetix-network-token", "pancakeswap-token", "lido-dao", "eos",
+    "kava", "mina", "trust-wallet-token", "conflux-token", "woo-network",
+    "zilliqa", "pax-gold", "kucoin-shares", "huobi-token", "bitget-token",
+    "nexo", "pendle", "akash-network", "helium", "singularitynet"
 ]
 
 def fetch_historical_bulk(coin_ids: list[str] = TOP_COINS) -> dict:
