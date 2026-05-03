@@ -5,12 +5,22 @@ from loguru import logger
 
 def transform_markets(raw: list[dict]) -> pd.DataFrame:
     df = pd.DataFrame(raw)
+    
+    if 'price_change_percentage_7d_in_currency' not in df.columns:
+        df['price_change_percentage_7d_in_currency'] = 0.0
+    if 'price_change_percentage_24h' not in df.columns:
+        df['price_change_percentage_24h'] = 0.0
+        
+    df['price_change_percentage_7d_in_currency'] = df['price_change_percentage_7d_in_currency'].fillna(0.0)
+    df['price_change_percentage_24h'] = df['price_change_percentage_24h'].fillna(0.0)
+    
     df = df[[
         "id", "symbol", "name", "current_price", "market_cap",
         "total_volume", "price_change_percentage_24h",
         "price_change_percentage_7d_in_currency",
         "circulating_supply", "last_updated"
     ]].copy()
+    
     df.rename(columns={
         "price_change_percentage_7d_in_currency": "price_change_7d"
     }, inplace=True)
@@ -19,7 +29,6 @@ def transform_markets(raw: list[dict]) -> pd.DataFrame:
     df["fetched_at"] = pd.Timestamp.utcnow()
     logger.info(f"[Transform] markets: {len(df)} rows cleaned")
     return df
-
 
 def transform_historical(raw: dict, coin_id: str) -> pd.DataFrame:
     prices = raw.get("prices", [])
@@ -34,13 +43,13 @@ def transform_historical(raw: dict, coin_id: str) -> pd.DataFrame:
     logger.info(f"[Transform] historical {coin_id}: {len(df)} rows")
     return df
 
-
 def transform_fear_greed(raw: list[dict]) -> pd.DataFrame:
     df = pd.DataFrame(raw)
     df = df[["value", "value_classification", "timestamp"]].copy()
-    df["value"] = pd.to_numeric(df["value"])
+    df["value"] = pd.to_numeric(df["value"], errors="coerce")
     df["date"]  = pd.to_datetime(df["timestamp"], unit="s").dt.date
     df.drop(columns=["timestamp"], inplace=True)
     df.rename(columns={"value_classification": "label"}, inplace=True)
+    df.dropna(subset=["value", "date"], inplace=True)
     logger.info(f"[Transform] fear_greed: {len(df)} rows cleaned")
     return df
