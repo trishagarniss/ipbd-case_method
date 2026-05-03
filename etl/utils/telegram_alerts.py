@@ -14,7 +14,7 @@ def send_telegram_alert(context):
     exception = context.get('exception')
     error_msg = str(exception)[:200] + "..." if len(str(exception)) > 200 else str(exception)
     
-    airflow_url = "http://localhost:8081/home"
+    airflow_url = f"http://20.41.104.165:8081/dags/{dag_id}/grid"
 
     pesan = f"🚨 <b>CRITICAL ETL FAILURE</b> 🚨\n\n" \
             f"<b>DAG:</b> <code>{dag_id}</code>\n" \
