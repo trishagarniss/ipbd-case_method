@@ -5,12 +5,26 @@ from sqlalchemy import create_engine, text
 from loguru import logger
 from config.settings import DATABASE_URL
 
-
 def get_engine():
     return create_engine(DATABASE_URL)
 
+def upsert_dim_coins(df: pd.DataFrame):
+    engine = get_engine()
+    
+    dim_df = df[['id', 'symbol', 'name']].drop_duplicates()
+    
+    with engine.begin() as conn:
+        for _, row in dim_df.iterrows():
+            conn.execute(text("""
+                INSERT INTO dim_coins (coin_id, symbol, name)
+                VALUES (:id, :symbol, :name)
+                ON CONFLICT (coin_id) DO NOTHING
+            """), row.to_dict())
+    logger.info(f"[Postgres] dim_coins: {len(dim_df)} rows upserted")
 
 def upsert_markets(df: pd.DataFrame):
+    upsert_dim_coins(df)
+    
     engine = get_engine()
     with engine.begin() as conn:
         for _, row in df.iterrows():
@@ -27,7 +41,6 @@ def upsert_markets(df: pd.DataFrame):
                 ON CONFLICT (id, last_updated) DO NOTHING
             """), row.to_dict())
     logger.info(f"[Postgres] coins_prices: {len(df)} rows upserted")
-
 
 def upsert_historical(df: pd.DataFrame):
     engine = get_engine()
