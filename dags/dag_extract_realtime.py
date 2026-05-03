@@ -19,7 +19,7 @@ with DAG(
     dag_id="dag_extract_realtime",
     default_args=default_args,
     description="Extract data pasar Real-Time ke MinIO",
-    schedule_interval="*/15 * * * *",
+    schedule_interval=None,
     max_active_runs=1,
     start_date=datetime(2024, 1, 1),
     catchup=False,
