@@ -71,7 +71,7 @@ Pipeline ini dilengkapi dengan tabel `etl_logs` yang mencatat setiap eksekusi ta
 - **Orchestration**: Apache Airflow
 - **Storage (Raw)**: MinIO (S3-compatible)
 - **Warehouse**: PostgreSQL
-- **Transform**: Pandas & SQLAlchemy[cite: 4]
+- **Transform**: Pandas & SQLAlchemy
 - **Infrastructure**: Docker Compose
 - **Cloud**: Microsoft Azure (Ubuntu 22.04 LTS)
 ```
