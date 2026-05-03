@@ -1,86 +1,77 @@
 # 🪙 Crypto Market Data Pipeline
 
-Pipeline ETL end-to-end untuk data pasar kripto secara otomatis.  
-Dibangun dengan Python · Apache Airflow · MinIO · PostgreSQL · Docker
+Pipeline ETL end-to-end untuk data pasar kripto secara otomatis dengan fitur logging dan monitoring.  
+Dibangun dengan Python · Apache Airflow · MinIO · PostgreSQL · Docker · Azure
 
 ---
 
-## 🚀 Cara Menjalankan (dari Nol)
+## Cara Menjalankan (Deployment)
 
 ### 1. Clone repo
 ```bash
-git clone https://github.com/username/crypto-pipeline.git
-cd crypto-pipeline
+git clone https://github.com/trishagarniss/ipbd-case_method.git
+cd ipbd-case_method
 ```
 
 ### 2. Setup environment
 ```bash
-cp .env.example .env
-# Edit .env sesuai kebutuhan (password dll)
+# Buat file .env dan sesuaikan kredensial
+nano .env 
 ```
 
 ### 3. Jalankan semua service
 ```bash
-docker compose up -d
+# Build image untuk menginstall dependencies (loguru, pandas, dll)
+docker compose up -d --build
 ```
 
-### 4. Akses UI
+### 4. Initial Load (Manual Trigger)
+Jalankan ini sekali untuk menarik data historical 90 hari dan mengisi tabel logs awal[cite: 4]:
+```bash
+docker exec -it ipbd-case_method-airflow-worker-1 python -m etl.scripts.initial_load
+```
+
+### 5. Akses UI
 | Service | URL | Kredensial |
 |---------|-----|------------|
-| Airflow | http://localhost:8080 | admin / admin |
-| MinIO | http://localhost:9001 | minioadmin / minioadmin |
-| Metabase | http://localhost:3000 | setup pertama kali |
-| PostgreSQL | localhost:5432 | lihat .env |
-
-### 5. Initial bulk load (5000+ rows)
-```bash
-# Jalankan sekali untuk tarik historical 90 hari
-docker compose exec airflow-webserver python etl/scripts/initial_load.py
-```
+| **Airflow** | http://20.41.104.165:8080 | admin / admin |
+| **MinIO** | http://20.41.104.165:9001 | minio_admin / SecretKeyMinio! |
+| **Metabase** | http://20.41.104.165:3000 | setup pertama kali |
 
 ---
 
 ## 📁 Struktur Folder
 
 ```
-crypto-pipeline/
-├── dags/                   # Airflow DAG definitions
-│   ├── dag_extract.py      # DAG: extract dari 3 API ke MinIO
-│   └── dag_transform_load.py # DAG: transform + load ke Postgres
+ipbd-case_method/
+├── dags/                # Definisi Orchestration Airflow
 ├── etl/
-│   ├── extract/            # Script HTTP ke setiap API
-│   ├── transform/          # Pandas cleaning & kalkulasi
-│   └── load/               # Upsert ke Postgres & upload MinIO
+│   ├── extract/         # Script penarikan API (CoinGecko, Fear&Greed)
+│   ├── transform/       # Cleaning & kalkulasi (MA7, MA30, Volatility)
+│   └── load/            # Upsert ke Postgres & logging mechanism[cite: 4]
 ├── db/
-│   └── init.sql            # Skema tabel PostgreSQL
+│   └── init.sql         # Skema tabel database (termasuk etl_logs)
 ├── config/
-│   └── settings.py         # Konfigurasi dari .env
-├── logs/                   # Airflow & pipeline logs
-├── notebooks/              # Eksplorasi & analisis
-├── docker-compose.yml
-├── .env.example
-└── pyproject.toml
+│   └── settings.py      # Konfigurasi environment variabel[cite: 2]
+├── docker-compose.yml   # Orchestration container
+└── requirements.txt     # Python dependencies
 ```
 
 ---
 
-## 📊 Tabel Database
-
-| Tabel | Isi | Update |
-|-------|-----|--------|
-| `coins_prices` | Snapshot harga 250 koin | Setiap 15 menit |
-| `coins_historical` | Historical harga + MA7/MA30/volatility | Setiap hari |
-| `coincap_assets` | Data aset dari CoinCap | Setiap 15 menit |
-| `fear_greed_daily` | Fear & Greed Index harian | Setiap hari |
+## 📊 Monitoring & Logging
+Pipeline ini dilengkapi dengan tabel `etl_logs` yang mencatat setiap eksekusi task:
+- **Status**: SUCCESS / FAILED.
+- **Metrics**: Jumlah baris data yang berhasil diproses.
+- **Error Tracking**: Pesan error otomatis tercatat jika task gagal[cite: 4].
 
 ---
 
 ## 🛠️ Tech Stack
-
-- **Orchestration**: Apache Airflow 2.8
-- **Storage (raw)**: MinIO (S3-compatible object storage)
-- **Warehouse**: PostgreSQL 14
-- **Transform**: Pandas, NumPy
-- **Visualisasi**: Metabase
-- **Infra**: Docker Compose
-- **VPS**: DigitalOcean (Singapore)
+- **Orchestration**: Apache Airflow
+- **Storage (Raw)**: MinIO (S3-compatible)
+- **Warehouse**: PostgreSQL
+- **Transform**: Pandas & SQLAlchemy[cite: 4]
+- **Infrastructure**: Docker Compose
+- **Cloud**: Microsoft Azure (Ubuntu 22.04 LTS)
+```
